@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrafficVision AI</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#eaf0f8;background:#0b1220}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#18304b 0,#0b1220 48%);min-height:100vh}
+header{padding:26px max(5vw,20px);border-bottom:1px solid #26364a;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:21px;font-weight:800;letter-spacing:.2px}.brand span{color:#57d6b0}
+.pill{font-size:12px;color:#b8c8d9;border:1px solid #39516b;padding:7px 11px;border-radius:30px}
+main{max-width:1100px;margin:38px auto;padding:0 20px}.hero h1{font-size:clamp(30px,5vw,48px);margin:0 0 12px}.hero p{color:#aebed0;max-width:720px;line-height:1.6}
+.panel{background:#111d2e;border:1px solid #2a3d54;border-radius:18px;padding:24px;margin-top:26px;box-shadow:0 18px 50px #0003}
+label{display:block;color:#c9d7e6;font-size:14px;margin:16px 0 8px}input[type=file],input[type=number]{width:100%;padding:12px;border:1px solid #3b5069;background:#0b1625;color:#eaf0f8;border-radius:10px}
+button{background:#57d6b0;color:#092019;font-weight:800;border:0;border-radius:10px;padding:13px 20px;margin-top:18px;cursor:pointer}button:disabled{opacity:.5;cursor:wait}
+.muted{color:#91a5ba;font-size:13px;line-height:1.5}.status{margin-top:15px;color:#b9d5e9}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px;margin-top:18px}
+.metric{background:#0b1625;border:1px solid #263a50;border-radius:12px;padding:16px}.metric b{display:block;font-size:27px;color:#57d6b0}.metric small{color:#9eb1c5}
+.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}.frame{background:#0b1625;border:1px solid #2a3d54;border-radius:12px;overflow:hidden}.frame img{width:100%;display:block}.frame div{padding:12px;font-size:13px;color:#c2d0df}
+.notice{background:#332b18;border:1px solid #705d2c;color:#f5dfaa;padding:14px;border-radius:12px;margin-top:20px;line-height:1.5}
+.hidden{display:none}a{color:#57d6b0}footer{padding:30px 20px;text-align:center;color:#71869d;font-size:12px}
+</style></head>
+<body>
+<header><div class="brand">🚦 Traffic<span>Vision</span> AI</div><div class="pill">LOCAL PROTOTYPE · HUMAN REVIEW REQUIRED</div></header>
+<main>
+<section class="hero"><h1>Video-based traffic analysis</h1><p>Upload a traffic video to sample frames and detect common vehicle classes. Review the evidence before recording any finding. This learning prototype does not identify a registered owner, determine legal liability, or issue official challans.</p></section>
+<section class="panel">
+<h2 style="margin:0">Analyze a video</h2>
+<form id="form">
+<label for="video">Traffic video</label><input id="video" name="video" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,.mkv" required>
+<label for="interval">Frame sampling interval (seconds)</label><input id="interval" name="sample_seconds" type="number" min=".5" max="10" step=".5" value="1">
+<p class="muted">For best results, use a short, clear clip (under 60 seconds) that you are authorized to process. Processing runs on the computer hosting this app.</p>
+<button id="submit" type="submit">Analyze video</button><div id="status" class="status" role="status"></div>
+</form></section>
+<section id="results" class="panel hidden"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><h2 style="margin:0">Analysis results</h2><a id="download" href="#">Download JSON report</a></div>
+<div class="grid" id="metrics"></div><div class="notice" id="notice"></div><h3>Sampled evidence frames</h3><div class="frames" id="frames"></div></section>
+</main><footer>TrafficVision AI · Educational prototype · Use authorized footage and protect personal data.</footer>
+<script>
+const form=document.querySelector('#form'), btn=document.querySelector('#submit'), statusEl=document.querySelector('#status');
+form.addEventListener('submit',async e=>{
+ e.preventDefault(); const file=document.querySelector('#video').files[0]; if(!file)return;
+ if(file.size>300*1024*1024){statusEl.textContent='File is larger than the 300 MB prototype limit.';return;}
+ btn.disabled=true;statusEl.textContent='Uploading and analyzing… This may take a while.';
+ document.querySelector('#results').classList.add('hidden');
+ const data=new FormData();data.append('video',file);data.append('sample_seconds',document.querySelector('#interval').value);
+ try{
+  const r=await fetch('/api/analyze',{method:'POST',body:data});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Analysis failed');
+  document.querySelector('#results').classList.remove('hidden');
+  document.querySelector('#metrics').innerHTML=[
+   ['Video length',j.duration_seconds+' s'],['Frames sampled',j.sampled_frames],['Vehicle detections',j.vehicle_detections],['Detector',j.model_available?'YOLOv8n loaded':'Unavailable']
+  ].map(x=>`<div class="metric"><b>${x[1]}</b><small>${x[0]}</small></div>`).join('');
+  document.querySelector('#notice').textContent=j.review_notice;
+  document.querySelector('#download').href='/api/report/'+j.job_id;
+  document.querySelector('#frames').innerHTML=j.frames.map(f=>`<div class="frame"><img src="${f.image}" alt="Analyzed video frame"><div><b>Timestamp: ${f.time}s</b><br>${f.vehicles.length} vehicle(s) detected${f.vehicles.map(v=>`<br>• ${v.type} (${Math.round(v.confidence*100)}%)`).join('')}</div></div>`).join('')||'<p class="muted">No frames were sampled.</p>';
+  statusEl.textContent='Analysis complete. Please review the evidence below.';
+ }catch(err){statusEl.textContent='Error: '+err.message;}
+ finally{btn.disabled=false;}
+});
+</script></body></html>
