@@ -8,6 +8,7 @@ A browser-based educational prototype that accepts a short traffic video, sample
 - YOLOv8n detection for cars, motorcycles, buses, and trucks
 - Timestamped annotated evidence frames
 - Downloadable JSON analysis report
+- Possible wrong-way travel with timestamped evidence. Use a fixed-camera clip of a single direction of traffic and select the allowed on-screen direction before analyzing.
 
 ## What is not implemented
 This is an MVP, not a production enforcement system. It does **not** perform reliable number-plate localization/OCR, determine a legal violation, identify a registered owner, calculate official fines, or issue a challan. Those require jurisdiction-specific rules, validated models, secure integrations, and human/legal review. Do not treat model output as proof.

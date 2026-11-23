@@ -1,0 +1,71 @@
+{
+  "title": "Uttar Pradesh Transport Department compounding schedule",
+  "date": "2020-07-30",
+  "status": "superseded",
+  "source_url": "https://img1.digitallocker.gov.in/circulars/UP_Transport_Dept_Notification.pdf",
+  "superseding_notification_url": "https://upidadv.up.gov.in/upload/PublicationRequest/168133/SachivalayaLKO300425Notification638816142201879531.pdf",
+  "rules": {
+    "Parking and road use": [
+      ["parking", "122 and 126 with 177", "Parking rule violation"],
+      ["unsignaled_lane_change", "119 with 177", "Unsignaled lane or alignment change, subject to the listed §184 exclusions"],
+      ["speeding", "183(1) with 112", "Exceeding the applicable speed limit"],
+      ["handheld_device", "184(c), CMVR rule 21", "Using a handheld communication device while driving"],
+      ["unsafe_medical_condition", "186", "Driving with a known condition that makes the driving dangerous"],
+      ["unauthorized_race", "189", "Unauthorized race or speed trial in a public place"],
+      ["emergency_passage", "194E", "Failing to give free passage to an emergency vehicle"],
+      ["unnecessary_horn", "194F(1)", "Unnecessary, continuous or excessive horn use"],
+      ["prohibited_horn", "194F(2)", "Using a horn in a prohibited area"],
+      ["exhaust_cutout", "194F(3)", "Driving with an exhaust cutout that bypasses the silencer"]
+    ],
+    "Riders, restraints and passengers": [
+      ["footboard", "123 with 177", "Passenger standing on a footboard"],
+      ["passenger_capacity", "194A, UP MVR rule 135", "Carrying more passengers than the registration or permit allows"],
+      ["seat_belt", "194B(1)", "Driver or passenger without a seat belt"],
+      ["child_restraint", "194B(2)", "Child under 14 without a seat belt or child restraint"],
+      ["motorcycle_passengers", "194C", "Motorcycle carrying more than one passenger in addition to the driver"],
+      ["helmet", "194D with 129, UP MVR rule 121", "Motorcycle helmet violation"]
+    ],
+    "Documents, licensing and authority": [
+      ["documents", "130 with 177, CMVR rule 15(7)", "Failure to produce requested vehicle or driver documents, including accepted electronic documents"],
+      ["out_of_state_registration", "47 with 177", "Using another state's registration mark for more than 12 months"],
+      ["loaned_license", "6(2) with 177", "Giving a driving licence to another person"],
+      ["lawful_direction", "179(1)", "Disobeying a lawful direction or obstructing an authorized official"],
+      ["required_information", "179(2)", "Refusing required information or knowingly giving false information"],
+      ["allow_ineligible_driver", "180", "Allowing an ineligible person to drive"],
+      ["ineligible_driver", "181", "Driving in contravention of licence or minimum-age requirements"],
+      ["disqualified_driver", "182(1)", "Driving while disqualified from holding or obtaining a driving licence"],
+      ["disqualified_conductor", "182(2)", "Working as a stage-carriage conductor while disqualified"],
+      ["registration", "192 with 39", "Operating without valid registration"],
+      ["fitness", "192 with 56", "Operating without a valid fitness certificate"],
+      ["registration_display", "192, CMVR rule 51", "Displaying the registration mark in a non-prescribed manner"],
+      ["other_registration_mark", "192, CMVR rule 51", "Displaying another vehicle's registration number"],
+      ["permit", "192A with 66", "Operating without a permit or contrary to route, area or purpose conditions"],
+      ["insurance", "196", "Driving or allowing operation of an uninsured vehicle"],
+      ["vehicle_interference", "198", "Unauthorized interference with or tampering with a vehicle"]
+    ],
+    "Commercial vehicles and fares": [
+      ["overcharge", "72(xiii) with 177", "Charging more than the permitted fare"],
+      ["required_display", "177, UP MVR rule 28", "Failing to display required transport-vehicle information"],
+      ["fare_meter", "177, UP MVR rule 166A", "Nonworking fare meter in a motor cab"],
+      ["passenger_ticket", "178(1)", "Travelling without a valid ticket or pass, or refusing to show it on request"],
+      ["conductor_ticket", "178(2)", "Conductor fare, ticket issuance, ticket validity, under-ticketing or ticket-checking offence"],
+      ["contract_carriage_refusal", "178(3)(a)–(b)", "Contract carriage unlawfully refusing to operate or carry passengers"]
+    ],
+    "Vehicle standards and loads": [
+      ["noncompliant_vehicle_sale", "182A(1)", "Manufacturer, importer or dealer supplying, modifying or offering a noncompliant vehicle"],
+      ["noncompliant_component_sale", "182A(3)", "Selling, offering or permitting sale of a noncompliant critical safety component"],
+      ["unauthorized_modification", "182A(4)", "Owner making a prohibited vehicle alteration"],
+      ["noncompliant_dimensions", "182B(i) with 62A(1)", "Registering a vehicle that breaches prescribed dimension rules"],
+      ["fitness_issuance", "182B(ii) with 62A(2)", "Contravening rules for issuing a fitness certificate"],
+      ["safety_standards", "190(2)", "Operating in breach of road-safety standards, such as reflector or speed limiter requirements"],
+      ["air_pollution", "190(2)", "Operating in breach of prescribed air-pollution standards"],
+      ["noise_pollution", "190(2)", "Operating in breach of prescribed noise standards"],
+      ["overweight", "194(1) with 113 and 115", "Operating above the permissible vehicle weight"],
+      ["protruding_load", "194(1A)", "Carrying a load projecting beyond permitted dimensions"],
+      ["weighing_refusal", "194(2) with 114", "Refusing to stop for weighing or removing load before weighing"]
+    ],
+    "Other": [
+      ["other_offence", "177", "Other contravention for which no specific penalty is prescribed"]
+    ]
+  }
+}

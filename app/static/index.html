@@ -28,20 +28,113 @@ button{background:#57d6b0;color:#092019;font-weight:800;border:0;border-radius:1
 <form id="form">
 <label for="video">Traffic video</label><input id="video" name="video" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,.mkv" required>
 <label for="interval">Frame sampling interval (seconds)</label><input id="interval" name="sample_seconds" type="number" min=".5" max="10" step=".5" value="1">
-<p class="muted">For best results, use a short, clear clip (under 60 seconds) that you are authorized to process. Processing runs on the computer hosting this app.</p>
+<label for="direction">Allowed direction in the video</label>
+<select id="direction" name="travel_direction">
+ <option value="">Vehicle detection only</option>
+ <option value="left">Left</option><option value="right">Right</option>
+ <option value="up">Up</option><option value="down">Down</option>
+</select>
+<p class="muted">To check for possible wrong-way travel, use a fixed-camera clip showing one direction of traffic and select the allowed direction as seen on screen.</p>
 <button id="submit" type="submit">Analyze video</button><div id="status" class="status" role="status"></div>
 </form></section>
 <section id="results" class="panel hidden"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><h2 style="margin:0">Analysis results</h2><a id="download" href="#">Download JSON report</a></div>
-<div class="grid" id="metrics"></div><div class="notice" id="notice"></div><h3>Sampled evidence frames</h3><div class="frames" id="frames"></div></section>
+<div class="grid" id="metrics"></div><div class="notice" id="notice"></div>
+<h3>Possible wrong-way travel</h3><div id="violations"></div>
+<h3>Review against the UP notification</h3>
+<p class="muted">The July 2020 schedule has been superseded. Use its offence descriptions as a historical reference for reviewer observations. <a id="up-source">2020 schedule</a> · <a id="up-replacement">Superseding notification</a></p>
+<form id="review-form">
+<label for="review-rule">Offence in the 2020 schedule</label>
+<select id="review-rule" required disabled><option value="">Choose an offence</option></select>
+<label for="review-frame">Video evidence frame</label>
+<select id="review-frame" required></select>
+<label for="review-note">Observation and supporting evidence</label>
+<textarea id="review-note" rows="3" maxlength="2000" required></textarea>
+<p class="muted">Include any supporting measurement, record or road context. Download the JSON before leaving to keep your observations.</p>
+<button id="review-add" type="submit" disabled>Add review observation</button>
+<p id="review-status" class="muted" role="status"></p>
+</form>
+<ul id="review-list"></ul>
+<h3>Evidence frames</h3><div class="frames" id="frames"></div></section>
 </main><footer>TrafficVision AI · Educational prototype · Use authorized footage and protect personal data.</footer>
 <script>
 const form=document.querySelector('#form'), btn=document.querySelector('#submit'), statusEl=document.querySelector('#status');
+const reviewForm=document.querySelector('#review-form');
+const reviewRule=document.querySelector('#review-rule'), reviewFrame=document.querySelector('#review-frame');
+const reviewNote=document.querySelector('#review-note'), reviewList=document.querySelector('#review-list');
+const reviewStatus=document.querySelector('#review-status'), reviewAdd=document.querySelector('#review-add');
+const download=document.querySelector('#download'), upRules=new Map();
+let analysis, upSchedule, reportUrl;
+
+function updateDownload(){
+ if(reportUrl)URL.revokeObjectURL(reportUrl);
+ const report={...analysis, reviewer_observations:analysis.reviewer_observations};
+ reportUrl=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
+ download.href=reportUrl;
+ download.download='trafficvision-'+analysis.job_id+'.json';
+}
+
+fetch('/static/up-rules-2020.json').then(response=>{
+ if(!response.ok)throw new Error('Schedule unavailable');
+ return response.json();
+}).then(schedule=>{
+ upSchedule=schedule;
+ document.querySelector('#up-source').href=schedule.source_url;
+ document.querySelector('#up-replacement').href=schedule.superseding_notification_url;
+ for(const [category,rules] of Object.entries(schedule.rules)){
+  const group=document.createElement('optgroup');
+  group.label=category;
+  for(const [id,section,label] of rules){
+   upRules.set(id,{id,section,label});
+   group.append(new Option(label+' (§'+section+')',id));
+  }
+  reviewRule.append(group);
+ }
+ reviewRule.disabled=false;
+ reviewAdd.disabled=!analysis?.frames.length;
+}).catch(()=>{reviewStatus.textContent='The UP schedule could not be loaded.';});
+
+function renderReview(){
+ reviewList.replaceChildren();
+ for(const [index,observation] of analysis.reviewer_observations.entries()){
+  const item=document.createElement('li'), evidence=document.createElement('a');
+  evidence.href=observation.frame.image;
+  evidence.textContent=observation.frame.time+' s';
+  const remove=document.createElement('button');
+  remove.type='button';
+  remove.textContent='Remove';
+  remove.setAttribute('aria-label','Remove observation '+(index+1));
+  remove.addEventListener('click',()=>{
+   analysis.reviewer_observations.splice(index,1);
+   renderReview();
+  });
+  item.append(observation.rule.label+' · ',evidence,' · '+observation.note+' ',remove);
+  reviewList.append(item);
+ }
+ updateDownload();
+}
+
+reviewForm.addEventListener('submit',event=>{
+ event.preventDefault();
+ const rule=upRules.get(reviewRule.value), frame=analysis?.frames[Number(reviewFrame.value)];
+ const note=reviewNote.value.trim();
+ if(!rule||!frame||!note)return;
+ const {title,date,status,source_url}=upSchedule;
+ analysis.reviewer_observations.push({
+  rule, frame:{time:frame.time,image:frame.image}, note,
+  reference:{title,date,status,source_url}
+ });
+ reviewNote.value='';
+ renderReview();
+});
+
 form.addEventListener('submit',async e=>{
  e.preventDefault(); const file=document.querySelector('#video').files[0]; if(!file)return;
  if(file.size>300*1024*1024){statusEl.textContent='File is larger than the 300 MB prototype limit.';return;}
  btn.disabled=true;statusEl.textContent='Uploading and analyzing… This may take a while.';
  document.querySelector('#results').classList.add('hidden');
  const data=new FormData();data.append('video',file);data.append('sample_seconds',document.querySelector('#interval').value);
+ const direction=document.querySelector('#direction').value;
+ if(direction)data.append('travel_direction',direction);
  try{
   const r=await fetch('/api/analyze',{method:'POST',body:data});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Analysis failed');
   document.querySelector('#results').classList.remove('hidden');
@@ -49,7 +142,31 @@ form.addEventListener('submit',async e=>{
    ['Video length',j.duration_seconds+' s'],['Frames sampled',j.sampled_frames],['Vehicle detections',j.vehicle_detections],['Detector',j.model_available?'YOLOv8n loaded':'Unavailable']
   ].map(x=>`<div class="metric"><b>${x[1]}</b><small>${x[0]}</small></div>`).join('');
   document.querySelector('#notice').textContent=j.review_notice;
-  document.querySelector('#download').href='/api/report/'+j.job_id;
+  const messages={
+   disabled:'Select an allowed direction to run this check.',
+   unavailable:'The vehicle detector was unavailable.',
+   incomplete:'Vehicle tracking failed during analysis. Review any available evidence.',
+   completed:'No possible wrong-way travel was flagged.'
+  };
+  const violations=document.querySelector('#violations');
+  violations.textContent=messages[j.wrong_way_check] || '';
+  if(j.violations.length){
+   if(j.wrong_way_check==='completed')violations.textContent='';
+   const list=document.createElement('ul');
+   for(const event of j.violations){
+    const item=document.createElement('li'), link=document.createElement('a');
+    link.href=event.image;
+    link.textContent=`${event.vehicle} #${event.track_id} at ${event.time}s · View evidence`;
+    item.append(link);
+    list.append(item);
+   }
+   violations.append(list);
+  }
+  analysis={...j,reviewer_observations:[]};
+  reviewForm.reset();
+  reviewFrame.replaceChildren(...j.frames.map((frame,index)=>new Option(frame.time+' s',index)));
+  reviewAdd.disabled=!upSchedule||!j.frames.length;
+  renderReview();
   document.querySelector('#frames').innerHTML=j.frames.map(f=>`<div class="frame"><img src="${f.image}" alt="Analyzed video frame"><div><b>Timestamp: ${f.time}s</b><br>${f.vehicles.length} vehicle(s) detected${f.vehicles.map(v=>`<br>• ${v.type} (${Math.round(v.confidence*100)}%)`).join('')}</div></div>`).join('')||'<p class="muted">No frames were sampled.</p>';
   statusEl.textContent='Analysis complete. Please review the evidence below.';
  }catch(err){statusEl.textContent='Error: '+err.message;}
